@@ -39,13 +39,21 @@ export default async function Signup(props: {
             minLength={6}
             required
           />
+
+          <Label htmlFor="display_name">Display Name</Label>
+          <Input
+            type="display_name"
+            name="display_name"
+            placeholder="welchiepoo"
+            required
+          />
+
           <SubmitButton formAction={signUpAction} pendingText="Signing up...">
             Sign up
           </SubmitButton>
           <FormMessage message={searchParams} />
         </div>
       </form>
-      <SmtpMessage />
     </>
   );
 }
