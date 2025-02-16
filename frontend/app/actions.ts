@@ -4,13 +4,16 @@ import { encodedRedirect } from "@/utils/utils";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { profile } from "console";
 
-export const signUpAction = async (formData: FormData) => {
+export const signUpAction = async (formData: FormData) => { // this is the function that happens when we sign up 
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
+  const input_display_name = formData.get("display_name")?.toString(); // how do I make sure this works? How is display name passed in the form? 
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
+  // Step 1: check to make sure email and password exist
   if (!email || !password) {
     return encodedRedirect(
       "error",
@@ -18,8 +21,10 @@ export const signUpAction = async (formData: FormData) => {
       "Email and password are required",
     );
   }
-
-  const { error } = await supabase.auth.signUp({
+ 
+  // Step 2: try to create a user 
+    // how does the error handling work? TODO: review this syntax 
+  const { data, error : signUpError } = await supabase.auth.signUp({ // this line is destructuring the result of this signup function 
     email,
     password,
     options: {
@@ -27,16 +32,38 @@ export const signUpAction = async (formData: FormData) => {
     },
   });
 
-  if (error) {
-    console.error(error.code + " " + error.message);
-    return encodedRedirect("error", "/sign-up", error.message);
-  } else {
-    return encodedRedirect(
-      "success",
-      "/sign-up",
-      "Thanks for signing up! Please check your email for a verification link.",
-    );
+  // Step 3: handle what happens if we have an error. This encoded redirect utility function will redirect to a different page with a message 
+  if (signUpError) {
+    console.error(signUpError.code + " " + signUpError.message);
+    return encodedRedirect("error", "/sign-up", signUpError.message);
   }
+  
+  // Step 4: Handle everything before completion 
+  const user = data.user;
+
+  if (user && input_display_name) { // check to see if we have a user and display name 
+
+    // flow is to 1) use sql trigger to create the row then 2) this update function will update the display name 
+    const {data: select_data, error: profileError} = await supabase 
+      .from('profiles')
+      .update({display_name: input_display_name})
+      .eq('id', user.id)
+      .select();
+
+    console.log("Update query result here: ", select_data, "ERROR: ", profileError)
+
+    if (profileError) {
+      console.error("Profile Erorr", profileError.message) // log error
+      return encodedRedirect("error", "/sign-up", "Couldn't create profile");
+    }
+  }
+
+  // Step 5: redirect to success page / sign up page   
+  return encodedRedirect(
+    "success",
+    "/sign-in",
+    "Thanks for signing up! Please check your email for a verification link.",
+  );
 };
 
 export const signInAction = async (formData: FormData) => {
@@ -53,7 +80,7 @@ export const signInAction = async (formData: FormData) => {
     return encodedRedirect("error", "/sign-in", error.message);
   }
 
-  return redirect("/protected");
+  return redirect("/home");
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {
@@ -67,7 +94,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?redirect_to=/protected/reset-password`,
+    redirectTo: `${origin}/auth/callback?redirect_to=/home/reset-password`,
   });
 
   if (error) {
@@ -99,7 +126,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   if (!password || !confirmPassword) {
     encodedRedirect(
       "error",
-      "/protected/reset-password",
+      "/home/reset-password",
       "Password and confirm password are required",
     );
   }
@@ -107,7 +134,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   if (password !== confirmPassword) {
     encodedRedirect(
       "error",
-      "/protected/reset-password",
+      "/home/reset-password",
       "Passwords do not match",
     );
   }
@@ -119,12 +146,12 @@ export const resetPasswordAction = async (formData: FormData) => {
   if (error) {
     encodedRedirect(
       "error",
-      "/protected/reset-password",
+      "/home/reset-password",
       "Password update failed",
     );
   }
 
-  encodedRedirect("success", "/protected/reset-password", "Password updated");
+  encodedRedirect("success", "/home/reset-password", "Password updated");
 };
 
 export const signOutAction = async () => {

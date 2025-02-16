@@ -1,8 +1,24 @@
-import { createClient } from "@/utils/supabase/client";
+import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
+import { createClient } from "@/utils/supabase/server";
+import { InfoIcon } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export default async function Page() {
-    const supabase = createClient()
-    const {data: users} = await supabase.from('users').select()
+export default async function HomePage() {
+  const supabase = await createClient();
 
-    return <pre> {"Here are the users: " + JSON.stringify(users, null, 2)} </pre>
-} 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect("/sign-in");
+  }
+
+  const {data: profile_data, error} = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
+
+  const display_name = profile_data?.display_name
+
+  return (
+    <h1> Hi, {display_name} </h1>
+  );
+}
