@@ -1,6 +1,5 @@
-import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
 import { createClient } from "@/utils/supabase/server";
-import { InfoIcon } from "lucide-react";
+import { Link } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function HomePage() {
@@ -19,6 +18,11 @@ export default async function HomePage() {
   const display_name = profile_data?.display_name
 
   return (
-    <h1> Hi, {display_name} </h1>
+    <div> 
+      <h1> Hi, {display_name} </h1>
+      <br/>
+
+      <a href="/home/chat"> Go to chat </a>
+    </div>
   );
 }

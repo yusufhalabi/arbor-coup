@@ -68,11 +68,14 @@
 ### **1. Authentication**
 - Enable email/password authentication.
 - Allow anonymous guest accounts.
+- As of right now supabase is configured to trigger a profile row creation on signup when a new user is added to auth.users
+    - this allows for the addition of the 'display_name' field in the profiles table
 
-### **2. Database Schema**
-- **users:** `id`, `username`, `email`, `auth_id`
+### **2. Database Schema (this is up to change)**
+- **users (exists in auth.users in supabase):** `id`, `username`, `email`, `auth_id` 
+- **profiles ()** `id`, `game_id`, `user_id`, `username`, `coins`, `cards`
+## These don't exist yet in supabase
 - **games:** `id`, `status`, `created_at`, `host_id`
-- **players:** `id`, `game_id`, `user_id`, `username`, `coins`, `cards`
 - **actions:** `id`, `game_id`, `player_id`, `action_type`, `timestamp`
 - **lobby:** `id`, `game_id`, `player_id`, `status`
 
