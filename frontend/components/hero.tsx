@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 
 export default function Hero() {
   return (
-    <div className="relative z-10 flex flex-col items-center justify-center gap-12 text-center">
+    <div className="relative z-10 flex flex-col tracking-tighter items-center justify-center gap-12 text-center">
       {/* Welcome Message */}
-      <div className="text-8xl font-bold font-fraunces">
+      <div className="text-8xl font-recoletaBold text-michiganBlue opacity-80">
         Welcome to Arbor Coup!
       </div>
 

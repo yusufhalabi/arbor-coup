@@ -67,3 +67,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+@font-face {
+  font-family: 'Recoleta-Bold';
+  src: url('/fonts/Recoleta-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Recoleta-Regular';
+  src: url('/fonts/Recoleta-Regular.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}

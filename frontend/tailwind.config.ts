@@ -18,7 +18,13 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        recoletaBold: ["Recoleta-Bold", "sans-serif"],
+        recoleta: ["Recoleta-Regular", "sans-serif"],
+      },
       colors: {
+        michiganBlue: "#00247C",
+        michiganMaize: "#FFCB05",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
