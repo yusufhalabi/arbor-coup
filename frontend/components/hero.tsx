@@ -1,12 +1,27 @@
-export default function Header() {
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+export default function Hero() {
   return (
-    <div className="flex flex-col gap-16 items-center">
-      <div className="flex gap-8 justify-center items-center">
-        <h1 className="text3xl"> Welcome to Arbor Coup </h1> 
-        <span className="border-l rotate-45 h-6" />
+    <div className="relative z-10 flex flex-col items-center justify-center gap-12 text-center">
+      {/* Welcome Message */}
+      <div className="text-8xl font-bold font-fraunces">
+        Welcome to Arbor Coup!
       </div>
-      <h1 className="sr-only">Arbor Coup</h1>
-      <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent my-8" />
+
+      {/* Auth Buttons */}
+      <div className="flex justify-center gap-6">
+        <Link href="/sign-in">
+          <Button variant="secondary" size="lg" className="font-semibold text-lg">
+            Sign In
+          </Button>
+        </Link>
+        <Link href="/sign-up">
+          <Button variant="default" size="lg" className="font-semibold text-lg">
+            Sign Up
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

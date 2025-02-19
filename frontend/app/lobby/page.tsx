@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { Link } from "lucide-react";
 import { redirect } from "next/navigation";
 
-export default async function HomePage() {
+export default async function LobbyPage() {
   const supabase = await createClient();
 
   const {
@@ -22,7 +22,7 @@ export default async function HomePage() {
       <h1> Hi, {display_name} </h1>
       <br/>
 
-      <a href="/home/chat"> Go to chat </a>
+      <a href="/lobby/chat"> Go to chat </a>
     </div>
   );
 }

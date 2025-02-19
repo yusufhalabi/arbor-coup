@@ -1,12 +1,16 @@
 'use client';
 
+import { useUser } from '@/context/UserContext';
 import { useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import { Message } from '@/types';
-import { createClient } from "@/utils/supabase/server";
-import { useUser } from '@/context/UserContext';
 
-export default function ChatPage() {
+type ChatProps = {
+  roomId?: string;
+  className?: string;
+};
+
+export default function Chat({ roomId = 'default', className = '' }: ChatProps) {
   const { displayName, isLoading, error } = useUser();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -21,7 +25,6 @@ export default function ChatPage() {
     
     initSocket();
 
-    // Cleanup on unmount
     return () => {
       socket?.close();
     };
@@ -30,12 +33,10 @@ export default function ChatPage() {
   useEffect(() => {
     if (!socket) return;
 
-    // Listen for previous messages
     socket.on('previous-messages', (previousMessages: Message[]) => {
       setMessages(previousMessages);
     });
 
-    // Listen for new messages
     socket.on('new-message', (message: Message) => {
       setMessages((prev) => [...prev, message]);
     });
@@ -74,7 +75,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto p-4 bg-gray-100">
+    <div className={`flex flex-col h-[600px] max-w-2xl mx-auto p-4 bg-gray-100 ${className}`}>
       <div className="flex-1 overflow-y-auto mb-4 space-y-4">
         {messages.map((message) => (
           <div 

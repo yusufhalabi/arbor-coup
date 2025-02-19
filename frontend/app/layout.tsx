@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import Link from "next/link";
 import "./globals.css";
 import { UserProvider } from '@/context/UserContext';
+import Head from 'next/head';
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -15,8 +16,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "Arbor Coup",
+  description: "Coup for the ladies and gentlemen of Arbor St.",
 };
 
 const geistSans = Geist({
@@ -31,6 +32,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={geistSans.className} suppressHydrationWarning>
+      <Head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com"  />
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap" rel="stylesheet" />
+      </Head>
       <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
@@ -43,12 +49,12 @@ export default function RootLayout({
               <div className="flex-1 w-full flex flex-col gap-20 items-center">
                 <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
                   <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-                    <div className="flex gap-5 items-center font-semibold">
+                    {/* <div className="flex gap-5 items-center font-semibold">
                       <Link href={"/"}>Next.js Supabase Starter</Link>
                       <div className="flex items-center gap-2">
                         <DeployButton />
                       </div>
-                    </div>
+                    </div> */}
                     {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
                   </div>
                 </nav>

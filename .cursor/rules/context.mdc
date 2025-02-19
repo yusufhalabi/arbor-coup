@@ -1,0 +1,20 @@
+---
+description: describes how I want the user flow of the application to look like
+globs: 
+---
+
+# General Context  
+- There are 2 stages to the development of this project that I want to accomplish one-by-one
+- The first stage of the project needs to be extendable such that the components we create can be usable to make the second stage 
+
+# Precursory steps
+- Need to be able to login / sign up which should be handled by supabase
+- users should have a display name that can be changed in the main lobby
+- reconnects should be handled through socket io 
+    - if a user disconnect mid-game, the game will pause until the user rejoins or if a minute passes the user's turn will be skipped 
+    - include a timer for this minute countdown 
+
+# Stage 1: Single-lobby application 
+- make a single lobby application where on sign-in, users will be entered into the "lobby" where can either join a game that hasn't started, or wait for the next game to start. 
+- If the user was the first person in the lobby, they will be the admin, the admin has the ability to start the game once the minimum numbers of players has joined
+- 

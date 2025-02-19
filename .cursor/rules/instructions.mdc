@@ -13,6 +13,8 @@ globs:
 # General Code Standards
 - make sure to leave instructive and descriptive comments 
 - avoid inline CSS 
+- All design decisions should be made with best practices in mind and cross-device functionality. 
+    - Design should keep in mind that a lot of users will be using the website on mobile devices as well as PCs. 
 
 # Additional Guidance
 - We use the next.js App router

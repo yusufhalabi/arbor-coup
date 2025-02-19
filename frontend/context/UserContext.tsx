@@ -14,9 +14,8 @@ type UserContextType = {
 // We'll provide the actual value in our Provider component
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-// The Provider component that will wrap our app
-// This makes the context available to all child components
-export function UserProvider({ children }: { children: React.ReactNode }) {
+// The Provider component that will wrap our app, will be available to all child components 
+export function UserProvider({ children }: { children: React.ReactNode }) { // TODO: review this 
   // State for managing our user data and loading/error states
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);  // Start with loading true
@@ -55,7 +54,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Call our async function
-    loadUserData();
+    loadUserData(); // TODO: review how this works 
   }, []); // Empty dependency array means this only runs once on mount
 
   // Provide our context values to children
@@ -68,7 +67,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
 // Custom hook to use our context
 // This makes it easier and safer to use the context in other components
-export function useUser() {
+export function useUser(): { displayName: string | null; isLoading: boolean; error: string | null } {
   const context = useContext(UserContext);
   
   // Throw an error if someone tries to use the context outside of the Provider
@@ -78,3 +77,9 @@ export function useUser() {
   
   return context;
 } 
+
+/*
+notes here: 
+    - context data isn't passed to everything, need to declare that we're using it 
+    - can we use this in an external file? 
+*/
