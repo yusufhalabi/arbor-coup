@@ -18,6 +18,10 @@ export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Arbor Coup",
   description: "Coup for the ladies and gentlemen of Arbor St.",
+  icons: {
+    icon: '/images/trees.svg',
+    apple: '/images/trees.svg',
+  },
 };
 
 const geistSans = Geist({

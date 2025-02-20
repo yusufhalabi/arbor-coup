@@ -5,7 +5,8 @@ globs:
 
 # General Context  
 - There are 2 stages to the development of this project that I want to accomplish one-by-one
-- The first stage of the project needs to be extendable such that the components we create can be usable to make the second stage 
+- The first stage of the project needs to be extendable such that the components we create can be usable to make the second stage
+- Whenever you make a technical decision. Make sure to discuss all tradeoffs that you considered, what the alternatives are, and reasoning behind why you're choosing to do a certain thing.  
 
 # Precursory steps
 - Need to be able to login / sign up which should be handled by supabase
@@ -17,4 +18,10 @@ globs:
 # Stage 1: Single-lobby application 
 - make a single lobby application where on sign-in, users will be entered into the "lobby" where can either join a game that hasn't started, or wait for the next game to start. 
 - If the user was the first person in the lobby, they will be the admin, the admin has the ability to start the game once the minimum numbers of players has joined
-- 
+- once the game is started, any new players that join the lobby will be able to spectate the game, but won't be able to join the game until after the game ends
+
+# In-game requirements: 
+- users should have a placeholder icon that represents a player 
+- players should be evenly distributed in a circle on the screen 
+    - this should resemble a board game being played in real life and should be adaptable for each possible # of players that can play coup
+- a player should be able to see what cards they have, but will not be able to see what cards other people have

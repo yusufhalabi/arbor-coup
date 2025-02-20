@@ -17,7 +17,7 @@ export default async function Home() {
       <div className="relative flex flex-col items-center justify-between min-h-screen">
         {/* Carousel Section - Reduced top padding */}
         <div className="relative z-10 w-full flex items-center justify-center h-[60vh]
-                      pt-8 md:pt-12 lg:pt-16">
+                      pt-8 md:pt-12 lg:pt-16 hidden lg:flex">
           <ThreeDPhotoCarousel />
         </div>
 
