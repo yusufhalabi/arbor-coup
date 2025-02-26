@@ -21,7 +21,7 @@ io.on('connection', (socket) => {
   // Send existing messages to newly connected users
   socket.emit('previous-messages', messages);
 
-  // Handle new messages
+  // Handle new message
   socket.on('send-message', (message: Message) => {
     messages.push(message);
     // Broadcast to all clients
