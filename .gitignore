@@ -1,47 +1,44 @@
-### BACKEND ###
-backend/node_modules
-
-#### FRONTEND ###
+#### src ###
 
 # dependencies
-frontend/node_modules
-frontend/.pnp
-frontend/.pnp.*
-frontend/.yarn/*
-!frontend/.yarn/patches
-!frontend/.yarn/plugins
-!frontend/.yarn/releases
-!frontend/.yarn/versions
+src/node_modules
+src/.pnp
+src/.pnp.*
+src/.yarn/*
+!src/.yarn/patches
+!src/.yarn/plugins
+!src/.yarn/releases
+!src/.yarn/versions
 
 # testing
-frontend/coverage
+src/coverage
 
 # next.js
-frontend/.next/
-frontend/out/
+src/.next/
+src/out/
 
 # production
-frontend/build
+src/build
 
 # misc
-frontend/.DS_Store
-frontend/*.pem
+src/.DS_Store
+src/*.pem
 
 # debug
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
+src/npm-debug.log*
+src/yarn-debug.log*
+src/yarn-error.log*
 
 # local env files
-frontend/.env*.local
-frontend/.env
+src/.env*.local
+src/.env
 
 # vercel
-frontend/.vercel
+src/.vercel
 
 # typescript
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
+src/*.tsbuildinfo
+src/next-env.d.ts
 
 # cursor 
 .cursor 

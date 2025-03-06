@@ -71,7 +71,8 @@ export const signInAction = async (formData: FormData) => {
   const password = formData.get("password") as string;
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  // Sign in the user
+  const { data: authData, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -159,3 +160,130 @@ export const signOutAction = async () => {
   await supabase.auth.signOut();
   return redirect("/sign-in");
 };
+
+export const createLobbyAction = async () => {
+  const supabase = await createClient();
+  
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return encodedRedirect("error", "/lobby", "You must be signed in to create a lobby");
+  }
+  
+  // Generate a unique lobby code (6 characters)
+  const lobbyCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+  
+  // Create a new game with status 'waiting'
+  const gameId = crypto.randomUUID();
+  
+  // Insert into lobbies
+  const { error: createGameError } = await supabase
+    .from('lobbies')
+    .insert({
+      id: gameId,
+      status: 'waiting',
+      current_turn: null,
+      lobby_code: lobbyCode
+    });
+    
+  if (createGameError) {
+    console.error("Error creating new game:", createGameError);
+    return encodedRedirect("error", "/lobby", "Failed to create lobby: " + createGameError.message);
+  }
+  
+  // Add the user as a player and make them the host
+  const { error: playerError } = await supabase
+    .from('player_state')
+    .insert({
+      game_id: gameId,
+      profile_id: user.id,
+      is_host: true,
+      is_ready: false,
+      coins: 2,
+      cards: []
+    });
+    
+  if (playerError) {
+    console.error("Error adding player to game:", playerError);
+    return encodedRedirect("error", "/lobby", "Failed to join as host: " + playerError.message);
+  }
+  
+  return redirect(`/lobby/${lobbyCode}`);
+};
+
+export const joinLobbyAction = async (formData: FormData) => {
+  const lobbyCode = formData.get("lobbyCode")?.toString().toUpperCase();
+  const supabase = await createClient();
+  
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return encodedRedirect("error", "/lobby", "You must be signed in to join a lobby");
+  }
+  
+  if (!lobbyCode) {
+    return encodedRedirect("error", "/lobby", "Lobby code is required");
+  }
+  
+  // Find the game with this lobby code
+  const { data: game, error: gameError } = await supabase
+    .from('game_state')
+    .select('*')
+    .eq('lobby_code', lobbyCode)
+    .single();
+    
+  if (gameError || !game) {
+    return encodedRedirect("error", "/lobby", "Invalid lobby code or lobby not found");
+  }
+  
+  // Check if the game is already in progress
+  if (game.status === 'in_progress') {
+    // Allow joining as spectator
+    const { error: spectatorError } = await supabase
+      .from('player_state')
+      .insert({
+        game_id: game.id,
+        profile_id: user.id,
+        is_host: false,
+        is_ready: false,
+        coins: 0,
+        cards: [],
+        is_spectator: true
+      });
+      
+    if (spectatorError) {
+      return encodedRedirect("error", "/lobby", "Failed to join as spectator");
+    }
+  } else {
+    // Check if player is already in this game
+    const { data: existingPlayer } = await supabase
+      .from('player_state')
+      .select('*')
+      .eq('game_id', game.id)
+      .eq('profile_id', user.id)
+      .single();
+      
+    if (!existingPlayer) {
+      // Add player to the game
+      const { error: playerError } = await supabase
+        .from('player_state')
+        .insert({
+          game_id: game.id,
+          profile_id: user.id,
+          is_host: false,
+          is_ready: false,
+          coins: 2,
+          cards: []
+        });
+        
+      if (playerError) {
+        return encodedRedirect("error", "/lobby", "Failed to join lobby");
+      }
+    }
+  }
+  
+  return redirect(`/lobby/${lobbyCode}`);
+};
+

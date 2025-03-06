@@ -1,6 +1,6 @@
 # Coup Web App Technical Roadmap
 
-## **Frontend Requirements**
+## Technical Requirements
 
 ### **1. Authentication & User Profiles**
 - Users can log in using Supabase authentication.
@@ -8,8 +8,7 @@
 - Guests can join lobbies without authentication (guest usernames are automatically generated).
 
 ### **2. Game Lobby**
-- A shared lobby where all players gather before starting a game.
-- Players can join the lobby via a generated lobby code.
+- Players can either create a new lobby or join an existing lobby via a generated lobby code.
 - Display a list of all connected players in real-time.
 - The host has the ability to start/restart the game with a button click.
 - Players should be able to indicate they are "ready" with a status toggle.
@@ -32,56 +31,15 @@
 - Maintain game state with turn order, cards, actions, and player information.
 - Handle transitions between different game phases (e.g., start of game, player's turn, action resolution, endgame).
 
-### **2. Real-Time Communication**
-- Implement Socket.IO for real-time updates.
-- Handle events for player actions, state updates, and chat messages.
-
-### **3. Player Management**
+### **2. Player Management**
 - Track player connections and disconnections.
 - Manage authenticated users and guest players.
 - Assign unique IDs to each player and manage seat assignments.
 
-### **4. Game Logic Execution**
+### **3. Game Logic Execution**
 - Enforce game rules such as action success, challenges, and card exchanges.
 - Resolve conflicts in real-time, including turn-based challenges and counteractions.
 - End the game when only one player remains with cards.
-
-## **Frontend-Backend Communication**
-
-### **Socket.IO Events**
-- `connect`: Client connects to the lobby.
-- `joinLobby`: Player joins the shared lobby.
-- `startGame`: Host starts the game.
-- `playerAction`: Players take actions (income, foreign aid, coup, etc.).
-- `updateGameState`: Backend sends updated game state to all clients.
-- `chatMessage`: Real-time chat messages.
-- `disconnect`: Handle player disconnections and update the lobby.
-
-### **API Endpoints (Express)**
-- `POST /api/join`: Join the lobby.
-- `POST /api/start`: Start the game.
-- `POST /api/action`: Perform a game action.
-- `GET /api/state`: Retrieve the current game state.
-
-## **Supabase Setup**
-
-### **1. Authentication**
-- Enable email/password authentication.
-- Allow anonymous guest accounts.
-- As of right now supabase is configured to trigger a profile row creation on signup when a new user is added to auth.users
-    - this allows for the addition of the 'display_name' field in the profiles table
-
-### **2. Database Schema (this is up to change)**
-- **users (exists in auth.users in supabase):** `id`, `username`, `email`, `auth_id` 
-- **profiles ()** `id`, `game_id`, `user_id`, `username`, `coins`, `cards`
-## These don't exist yet in supabase
-- **games:** `id`, `status`, `created_at`, `host_id`
-- **actions:** `id`, `game_id`, `player_id`, `action_type`, `timestamp`
-- **lobby:** `id`, `game_id`, `player_id`, `status`
-
-### **3. Real-Time Features**
-- Enable real-time subscriptions on `games`, `players`, and `actions` tables.
-- Use RLS (Row Level Security) to ensure players only access their own game states.
 
 ## **Game Logic for Coup**
 
