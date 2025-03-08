@@ -229,10 +229,12 @@ export const joinLobbyAction = async (formData: FormData) => {
   
   // Find the game with this lobby code
   const { data: game, error: gameError } = await supabase
-    .from('game_state')
+    .from('lobbies')
     .select('*')
     .eq('lobby_code', lobbyCode)
     .single();
+
+  console.log("Game state:", game);
     
   if (gameError || !game) {
     return encodedRedirect("error", "/lobby", "Invalid lobby code or lobby not found");
@@ -267,6 +269,9 @@ export const joinLobbyAction = async (formData: FormData) => {
       
     if (!existingPlayer) {
       // Add player to the game
+
+      console.log("Adding player to game:", game.id, user.id);
+      
       const { error: playerError } = await supabase
         .from('player_state')
         .insert({

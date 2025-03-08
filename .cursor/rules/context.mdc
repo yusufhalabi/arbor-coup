@@ -1,12 +1,10 @@
 ---
 description: describes how I want the user flow of the application to look like
 globs: 
+alwaysApply: false
 ---
 
 # General Context  
-- There are 2 stages to the development of this project that I want to accomplish one-by-one
-- The first stage of the project needs to be extendable such that the components we create can be usable to make the second stage
-- Whenever you make a technical decision. Make sure to discuss all tradeoffs that you considered, what the alternatives are, and reasoning behind why you're choosing to do a certain thing.  
 
 # Precursory steps
 - Need to be able to login / sign up which should be handled by supabase
@@ -15,10 +13,14 @@ globs:
     - if a user disconnect mid-game, the game will pause until the user rejoins or if a minute passes the user's turn will be skipped 
     - include a timer for this minute countdown 
 
-# Stage 1: Single-lobby application 
-- make a single lobby application where on sign-in, users will be entered into the "lobby" where can either join a game that hasn't started, or wait for the next game to start. 
-- If the user was the first person in the lobby, they will be the admin, the admin has the ability to start the game once the minimum numbers of players has joined
-- once the game is started, any new players that join the lobby will be able to spectate the game, but won't be able to join the game until after the game ends
+# Task 1: Create / Join a lobby after sign in 
+- after sign in, we need to be able to create or join a lobby. Make it so users can create a new lobby and can be given a link or a unique code to join. This should all be in accordance with the database design described in docs/Database.md
+- upon creating or joining a lobby, the player will be routed to a new page with that unique lobby. Only users that have joined the game with the code should be able to route to that lobby. 
+- on entry, the lobby page should display a list of all the joined players. 
+
+# Task 2: handle dead games + validate lobby join
+- we need to be able to handle connections, disconnections, and also handle cleaning up games that never happened. 
+
 
 # In-game requirements: 
 - users should have a placeholder icon that represents a player 
