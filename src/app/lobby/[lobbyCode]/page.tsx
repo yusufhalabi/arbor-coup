@@ -1,123 +1,111 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useUser } from '@/context/UserContext';
-import { redirect } from "next/navigation";
-import { use } from 'react';
-
-// Define types for our data
-interface Lobby {
-  id: string;
-  lobby_code: string;
-  status: string;
-  current_turn: string | null;
-  created_at: string;
-}
-
-interface Player {
-  profile_id: string;
-  game_id: string;
-  is_host: boolean;
-  is_ready: boolean;
-  coins: number;
-  cards: any[];
-  is_spectator?: boolean;
-  profiles?: {
-    display_name: string;
-  };
-}
+import { Button } from "@/components/ui/button";
+import { startGameAction } from "@/app/actions";
+import { useLobbyState, MIN_PLAYERS } from '@/hooks/useLobbyState';
+import { useLobbySubscription } from '@/hooks/useLobbySubscription';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function LobbyPage({ params }: { params: { lobbyCode: string } }) {
-  // need to use use() to unwrap the params
+  // Get the lobby code from params
   const unwrappedParams = use(params);
-  const { lobbyCode } = unwrappedParams;
-  
+  const lobbyCode = unwrappedParams.lobbyCode;
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [lobby, setLobby] = useState<Lobby | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [gameState, setGameState] = useState(null);
-  const { displayName, isLoading } = useUser();
-
-  useEffect(() => {
-    const checkLobbyAccess = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          // If not authenticated, redirect to login
-          router.push('/sign-in');
-          return;
-        }
-        
-        // Find the lobby with this code
-        const { data: lobbyData, error: lobbyError } = await supabase
-          .from('lobbies')
-          .select('*')
-          .eq('lobby_code', lobbyCode)
-          .single();
-        
-        if (lobbyError || !lobbyData) {
-          // Lobby doesn't exist, redirect to main lobby page
-          console.log('Lobby not found, redirecting...');
-          router.push('/lobby');
-          return;
-        }
-        
-        // Check if the current user is a player in this lobby
-        const { data: playerData, error: playerError } = await supabase
-          .from('player_state')
-          .select('*')
-          .eq('game_id', lobbyData.id)
-          .eq('profile_id', user.id)
-          .single();
-        
-        if (playerError || !playerData) {
-          // User is not a player in this lobby, redirect to main lobby page
-          console.log('User is not a player in this lobby, redirecting...');
-          router.push('/lobby');
-          return;
-        }
-        
-        // If we get here, the user has access to this lobby
-        setLobby(lobbyData as Lobby);
-        
-        // Fetch all players in this lobby
-        const { data: allPlayers } = await supabase
-          .from('player_state')
-          .select('*, profiles(display_name)')
-          .eq('game_id', lobbyData.id);
-        
-        if (allPlayers) {
-          setPlayers(allPlayers as Player[]);
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('Error checking lobby access:', error);
-        router.push('/lobby');
-      }
-    };
-    
-    if (!isLoading) {
-      checkLobbyAccess();
-    }
-  }, [lobbyCode, router, isLoading]);
   
-  if (loading || isLoading) return <div>Loading...</div>;
+  // Get user context and current user ID
+  const { displayName, isLoading, error, refreshUserData } = useUser();
+  const { userId, isLoading: isUserLoading } = useCurrentUser();
+  
+  // Get lobby state using our custom hook
+  const { 
+    status, 
+    lobby, 
+    players, 
+    isHost, 
+    canStartGame,
+    refetchLobby,
+    refetchPlayers
+  } = useLobbyState(lobbyCode, userId);
+  
+  // Set up callbacks for real-time updates
+  const handleLobbyUpdate = useCallback(() => {
+    refetchLobby();
+  }, [refetchLobby]);
+  
+  const handlePlayersUpdate = useCallback(() => {
+    refetchPlayers();
+  }, [refetchPlayers]);
+  
+  // Set up real-time subscriptions
+  useLobbySubscription(
+    lobby?.id || null,
+    handleLobbyUpdate,
+    handlePlayersUpdate
+  );
+  
+  // Handle errors
+  useEffect(() => {
+    if (status === 'error' && error) {
+      console.error('Lobby error:', error);
+      // We already handle redirects in the useLobbyState hook
+    }
+  }, [status, error]);
+  
+  // Add an effect to refresh user data if display name is missing
+  useEffect(() => {
+    if (!isLoading && !displayName) {
+      console.log("Display name missing, refreshing user data");
+      refreshUserData();
+    }
+  }, [isLoading, displayName, refreshUserData]);
+  
+  // Show loading state
+  if (isUserLoading || status === 'loading') {
+    return <div>Loading...</div>;
+  }
   
   return (
-    <div>
-      <h1>Lobby: {lobbyCode}</h1>
-      {/* Display lobby information */}
-      <div>
-        <h2>Players:</h2>
-        <ul>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Lobby: {lobbyCode}</h1>
+      
+      {/* Game status and controls */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-medium">
+              Status: {lobby?.status === 'waiting' ? 'Waiting for players' : 'Game in progress'}
+            </h2>
+            <p className="text-sm text-gray-500">
+              {players.length} player{players.length !== 1 ? 's' : ''} in lobby 
+              {players.length < MIN_PLAYERS && ` (need at least ${MIN_PLAYERS})`}
+            </p>
+          </div>
+          
+          {isHost && lobby?.status === 'waiting' && (
+            <form action={startGameAction}>
+              <input type="hidden" name="lobbyCode" value={lobbyCode} />
+              <Button 
+                type="submit" 
+                disabled={!canStartGame}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Start Game
+              </Button>
+            </form>
+          )}
+        </div>
+      </div>
+      
+      {/* Player list */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Players:</h2>
+        <ul className="space-y-2">
           {players.map((player) => (
-            <li key={player.profile_id}>
+            <li key={player.profile_id} className="p-2 border rounded">
               {player.profiles?.display_name || 'Unknown Player'}
               {player.is_host && ' (Host)'}
               {player.is_ready && ' (Ready)'}
@@ -125,7 +113,26 @@ export default function LobbyPage({ params }: { params: { lobbyCode: string } })
           ))}
         </ul>
       </div>
-      {/* Rest of your component */}
+      
+      {/* Game board (only shown when game is in progress) */}
+      {lobby?.status === 'in_progress' && (
+        <div className="mt-8 p-4 border rounded-lg">
+          <h2 className="text-xl font-bold mb-4">Game in Progress</h2>
+          
+          {/* Current turn indicator */}
+          <div className="mb-4">
+            <p className="font-medium">
+              Current Turn: {players.find(p => p.profile_id === lobby.current_turn)?.profiles?.display_name || 'Unknown'}
+            </p>
+          </div>
+          
+          {/* Game board UI */}
+          <div className="grid grid-cols-1 gap-4">
+            {/* This will be expanded with your game-specific UI */}
+            <p>Game board will be displayed here</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

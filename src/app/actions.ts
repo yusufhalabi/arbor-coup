@@ -292,3 +292,83 @@ export const joinLobbyAction = async (formData: FormData) => {
   return redirect(`/lobby/${lobbyCode}`);
 };
 
+export const startGameAction = async (formData: FormData) => {
+  const supabase = await createClient();
+  const lobbyCode = formData.get("lobbyCode")?.toString();
+
+  if (!lobbyCode) {
+    return encodedRedirect("error", "/lobby", "Lobby code is required");
+  }
+
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return encodedRedirect("error", "/lobby", "You must be signed in to start a game");
+  }
+
+  // Find the game with this lobby code
+  const { data: game, error: gameError } = await supabase
+    .from('lobbies')
+    .select('*')
+    .eq('lobby_code', lobbyCode)
+    .single();
+
+  if (gameError || !game) {
+    return encodedRedirect("error", "/lobby", "Invalid lobby code or lobby not found");
+  }
+
+  // Check if the current user is the host
+  const { data: playerData, error: playerError } = await supabase
+    .from('player_state')
+    .select('*')
+    .eq('game_id', game.id)
+    .eq('profile_id', user.id)
+    .single();
+    
+  if (playerError || !playerData || !playerData.is_host) {
+    return encodedRedirect("error", `/lobby/${lobbyCode}`, "Only the host can start the game");
+  }
+
+  // Check if the game is already in progress
+  if (game.status === 'in_progress') {
+    return encodedRedirect("error", `/lobby/${lobbyCode}`, "Game is already in progress");
+  }
+  
+  // Get all players in the lobby
+  const { data: players, error: playersError } = await supabase
+    .from('player_state')
+    .select('*')
+    .eq('game_id', game.id)
+    .is('is_spectator', null);
+    
+  if (playersError || !players || players.length === 0) {
+    return encodedRedirect("error", `/lobby/${lobbyCode}`, "Failed to fetch players");
+  }
+  
+  // Check if we have enough players
+  const MIN_PLAYERS = 3; // Set your minimum player count
+  if (players.length < MIN_PLAYERS) {
+    return encodedRedirect("error", `/lobby/${lobbyCode}`, `Need at least ${MIN_PLAYERS} players to start`);
+  }
+  
+  // Select a random player to go first
+  const firstPlayerIndex = Math.floor(Math.random() * players.length);
+  const firstPlayer = players[firstPlayerIndex];
+
+  // Update the game status to 'in_progress' and set the current turn
+  const { error: updateError } = await supabase
+    .from('lobbies')
+    .update({ 
+      status: 'in_progress',
+      current_turn: firstPlayer.profile_id
+    })
+    .eq('id', game.id);
+
+  if (updateError) {
+    return encodedRedirect("error", `/lobby/${lobbyCode}`, "Failed to start game");
+  }
+
+  return redirect(`/lobby/${lobbyCode}`);
+};
+
