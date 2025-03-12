@@ -15,15 +15,15 @@ export function useCurrentUser() {
         const { data, error } = await supabase.auth.getUser();
         
         if (error || !data.user) {
-          console.log('User not authenticated, redirecting to login');
-          router.push('/login');
+          console.log('User not authenticated, redirecting to sign-in');
+          router.push('/sign-in');
           return;
         }
         
         setUserId(data.user.id);
       } catch (error) {
         console.error('Error getting user:', error);
-        router.push('/login');
+        router.push('/sign-in');
       } finally {
         setIsLoading(false);
       }

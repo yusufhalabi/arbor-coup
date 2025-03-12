@@ -22,6 +22,7 @@ export interface Player {
   coins: number;
   cards: any[];
   is_spectator?: boolean;
+  is_disconnected?: boolean;
   profiles?: {
     display_name: string;
   };

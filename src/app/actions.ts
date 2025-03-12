@@ -157,6 +157,87 @@ export const resetPasswordAction = async (formData: FormData) => {
 
 export const signOutAction = async () => {
   const supabase = await createClient();
+  
+  try {
+    // Get the current user
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    
+    if (userId) {
+      console.log(`User ${userId} is signing out, cleaning up presence...`);
+      
+      // Find any active lobbies the user is in
+      const { data: playerData } = await supabase
+        .from('player_state')
+        .select('game_id')
+        .eq('profile_id', userId);
+      
+      // If the user is in any lobbies, remove them
+      if (playerData && playerData.length > 0) {
+        console.log(`User ${userId} is in ${playerData.length} lobbies, cleaning up...`);
+        
+        for (const player of playerData) {
+          const lobbyId = player.game_id;
+          
+          // Check if user is host
+          const { data: hostData } = await supabase
+            .from('player_state')
+            .select('is_host')
+            .eq('game_id', lobbyId)
+            .eq('profile_id', userId)
+            .single();
+          
+          const isHost = hostData?.is_host || false;
+          
+          // Remove the player from the game
+          await supabase
+            .from('player_state')
+            .delete()
+            .eq('game_id', lobbyId)
+            .eq('profile_id', userId);
+          
+          console.log(`Removed user ${userId} from lobby ${lobbyId}`);
+          
+          // If user was host, assign a new host
+          if (isHost) {
+            // Get remaining players
+            const { data: players } = await supabase
+              .from('player_state')
+              .select('profile_id')
+              .eq('game_id', lobbyId)
+              .is('is_disconnected', null)
+              .order('created_at', { ascending: true });
+            
+            if (players && players.length > 0) {
+              // Assign the oldest player as the new host
+              const newHostId = players[0].profile_id;
+              
+              await supabase
+                .from('player_state')
+                .update({ is_host: true })
+                .eq('game_id', lobbyId)
+                .eq('profile_id', newHostId);
+              
+              console.log(`Assigned new host ${newHostId} for lobby ${lobbyId}`);
+            } else {
+              // No players left, mark the lobby as abandoned
+              await supabase
+                .from('lobbies')
+                .update({ status: 'abandoned' })
+                .eq('id', lobbyId);
+              
+              console.log(`Marked lobby ${lobbyId} as abandoned - no players left`);
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error during sign out cleanup:', error);
+    // Continue with sign out even if cleanup fails
+  }
+  
+  // Sign out the user
   await supabase.auth.signOut();
   return redirect("/sign-in");
 };
@@ -240,9 +321,22 @@ export const joinLobbyAction = async (formData: FormData) => {
     return encodedRedirect("error", "/lobby", "Invalid lobby code or lobby not found");
   }
   
-  // Check if the game is already in progress
+  // Check if player is already in this game
+  const { data: existingPlayer } = await supabase
+    .from('player_state')
+    .select('*')
+    .eq('game_id', game.id)
+    .eq('profile_id', user.id)
+    .single();
+    
+  if (existingPlayer) {
+    // Player is already in the game, no need to add them again
+    return redirect(`/lobby/${lobbyCode}`);
+  }
+  
+  // Check if the game is in progress to add as spectator
   if (game.status === 'in_progress') {
-    // Allow joining as spectator
+    // Add as spectator since game already started
     const { error: spectatorError } = await supabase
       .from('player_state')
       .insert({
@@ -259,33 +353,22 @@ export const joinLobbyAction = async (formData: FormData) => {
       return encodedRedirect("error", "/lobby", "Failed to join as spectator");
     }
   } else {
-    // Check if player is already in this game
-    const { data: existingPlayer } = await supabase
+    // Add as normal player since game hasn't started
+    console.log("Adding player to game:", game.id, user.id);
+    
+    const { error: playerError } = await supabase
       .from('player_state')
-      .select('*')
-      .eq('game_id', game.id)
-      .eq('profile_id', user.id)
-      .single();
+      .insert({
+        game_id: game.id,
+        profile_id: user.id,
+        is_host: false,
+        is_ready: false,
+        coins: 2,
+        cards: []
+      });
       
-    if (!existingPlayer) {
-      // Add player to the game
-
-      console.log("Adding player to game:", game.id, user.id);
-      
-      const { error: playerError } = await supabase
-        .from('player_state')
-        .insert({
-          game_id: game.id,
-          profile_id: user.id,
-          is_host: false,
-          is_ready: false,
-          coins: 2,
-          cards: []
-        });
-        
-      if (playerError) {
-        return encodedRedirect("error", "/lobby", "Failed to join lobby");
-      }
+    if (playerError) {
+      return encodedRedirect("error", "/lobby", "Failed to join lobby");
     }
   }
   
@@ -340,7 +423,7 @@ export const startGameAction = async (formData: FormData) => {
     .from('player_state')
     .select('*')
     .eq('game_id', game.id)
-    .is('is_spectator', null);
+    .is('is_spectator', false);
     
   if (playersError || !players || players.length === 0) {
     return encodedRedirect("error", `/lobby/${lobbyCode}`, "Failed to fetch players");
