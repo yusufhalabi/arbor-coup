@@ -42,3 +42,6 @@ src/next-env.d.ts
 
 # cursor 
 .cursor 
+
+# macOS
+.DS_Store
